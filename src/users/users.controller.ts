@@ -32,14 +32,14 @@ export class UsersController {
   })
   @ApiQuery({ name: 'name', required: false })
   @Get()
-  getUsers(@Query('name') name: string): User[] {
+  getUsers(@Query('name') name: string): Promise<User[]> {
     return this.usersService.findAll(name);
   }
 
   @ApiOkResponse({ type: User })
   @ApiNotFoundResponse()
   @Get(':id')
-  getUserById(@Param('id', ParseIntPipe) id: number): User {
+  getUserById(@Param('id', ParseIntPipe) id: number): Promise<User> {
     // TODO: auto parse ID
 
     const user = this.usersService.findById(id);
@@ -54,7 +54,10 @@ export class UsersController {
   @ApiCreatedResponse({ type: User })
   @ApiBadRequestResponse()
   @Post()
-  createUser(@Body() body: CreateUserDto): User {
-    return this.usersService.createUser(body);
+  // createUser(@Body() body: CreateUserDto): User {
+  //   return this.usersService.createUser(body);
+  // }
+  createUser(@Body() body: CreateUserDto): Promise<User> {
+    return this.usersService.createUser('nama');
   }
 }
