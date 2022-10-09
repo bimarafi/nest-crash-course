@@ -1,64 +1,74 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ContactInfo } from './contact-infos/entities/contact-info.entity';
+import { Employee } from './employees/entities/employee.entity';
+import { Meeting } from './meetings/entities/meeting.entity';
+import { Task } from './taks/entities/taks.entity';
 import { User } from './users/entities/user.entity';
 
 @Injectable()
 export class AppService {
   constructor(
-    @InjectRepository(User) private usersRepository: Repository<User>,
+    @InjectRepository(Employee) private employeeRepo: Repository<Employee>,
+    @InjectRepository(ContactInfo)
+    private contactInfoRepo: Repository<ContactInfo>,
+    @InjectRepository(Meeting) private meetingRepo: Repository<Meeting>,
+    @InjectRepository(Task) private taskRepo: Repository<Task>,
   ) {}
 
-  findAll(name?: string): Promise<User[]> {
-    // if (name) {
-    //   return this.users.filter((user) => user.name === name);
-    // }
-    // return this.users;
-    return this.usersRepository.find({ relations: ['pets'] }); // SELECT * FROM users
+  async seed() {
+    const ceo = this.employeeRepo.create({ name: 'Bima' });
+    await this.employeeRepo.save(ceo);
+
+    const ceoContactInfo = this.contactInfoRepo.create({
+      email: 'email@email.com',
+    });
+    ceoContactInfo.employee = ceo;
+    await this.contactInfoRepo.save(ceoContactInfo);
+
+    const manager = this.employeeRepo.create({
+      name: 'Jhon',
+      manager: ceo,
+    });
+
+    const task1 = this.taskRepo.create({ name: 'Hire people' });
+    await this.taskRepo.save(task1);
+    const task2 = this.taskRepo.create({ name: 'Present to CEO' });
+    await this.taskRepo.save(task2);
+
+    manager.task = [task1, task2];
+
+    const meeting1 = this.meetingRepo.create({ zoomUrl: 'meeting.com' });
+    meeting1.attendees = [ceo];
+    await this.meetingRepo.save(meeting1);
+
+    manager.meetings = [meeting1];
+    await this.employeeRepo.save(manager);
   }
 
-  async findById(userId: number): Promise<User> {
-    // return this.users.find((user) => user.id === userId);
-    try {
-      const user = await this.usersRepository.findOneOrFail({
-        where: { id: userId },
-      }); // SELECT * FROM users WHERE users.id = userId
-      return user;
-    } catch (error) {
-      // handle error
-      throw error;
-    }
+  getEmployeeById(id: number) {
+    // return this.employeeRepo.findOne({
+    //   where: { id },
+    //   relations: {
+    //     manager: true,
+    //     directRepors: true,
+    //     task: true,
+    //     contactInfo: true,
+    //     meetings: true,
+    //   },
+    // });
+    return this.employeeRepo
+      .createQueryBuilder('employee')
+      .leftJoinAndSelect('employee.directRepors', 'directRepors')
+      .leftJoinAndSelect('employee.meetings', 'meetings')
+      .leftJoinAndSelect('employee.task', 'task')
+      .where('employee.id = :employeeId', { employeeId: id })
+      .getOne();
   }
 
-  // createUser(createUserDto: CreateUserDto): User {
-  //   const newUser = { id: Date.now(), ...createUserDto };
-
-  //   this.users.push(newUser);
-
-  //   return newUser;
-  // }
-  createUser(name: string): Promise<User> {
-    const newUser = this.usersRepository.create({ name });
-
-    return this.usersRepository.save(newUser); // INSERT
-  }
-
-  async updateUser(id: number, name: string): Promise<User> {
-    const user = await this.findById(id);
-
-    user.name = name;
-
-    return this.usersRepository.save(user); // UPDATE
-  }
-
-  async deleteUser(id: number): Promise<User> {
-    const user = await this.findById(id);
-
-    return this.usersRepository.remove(user); // DELETE
-  }
-
-  customQuery(): any {
-    return this.usersRepository.createQueryBuilder('users').select('*');
+  deleteEmployee(id: number) {
+    return this.employeeRepo.delete(id);
   }
 
   getHello(): string {

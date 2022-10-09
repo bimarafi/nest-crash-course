@@ -7,7 +7,8 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get('hello')
-  async getHello(): Promise<User[]> {
-    return this.appService.findAll();
+  async getHello(): Promise<any> {
+    // await this.appService.seed();
+    return this.appService.deleteEmployee(2);
   }
 }

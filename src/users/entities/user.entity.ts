@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Pet } from 'src/users/entities/pet.entity';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('users')
 export class User {
@@ -13,5 +19,6 @@ export class User {
   name?: string;
 
   @OneToMany((type) => Pet, (pet) => pet.owner)
+  @JoinColumn()
   pets?: Pet[];
 }
